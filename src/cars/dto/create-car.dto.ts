@@ -1,6 +1,6 @@
-export interface Car {
+export class CreateCarDto {
   brand: string;
   model: string;
-  age: number;
+  year: number;
   color: string;
 }
