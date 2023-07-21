@@ -17,6 +17,9 @@ export class Car {
 
   @Prop()
   color: string;
+
+  @Prop()
+  id: string;
 }
 
 export const CarSchema = SchemaFactory.createForClass(Car);

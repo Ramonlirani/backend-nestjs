@@ -1,4 +1,4 @@
-import { Body, Injectable } from '@nestjs/common';
+import { Body, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateCarDto } from './dto/create-car.dto';
 import { UpdateCarDto } from './dto/update-car.dto';
@@ -14,16 +14,30 @@ export class CarsService {
     return car.save();
   }
 
-  findAll() {
-    return this.carModel.find();
+  async findAll() {
+    const cars = await this.carModel.find().exec();
+    if (!cars || cars.length === 0) {
+      throw new NotFoundException('Nenhum carro encontrado');
+    }
+    return cars;
   }
 
-  findOne(id: string) {
-    return this.carModel.findById(id);
+  async findOne(id: string) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new NotFoundException('ID inválido');
+    }
+    const car = await this.carModel.findById(id).exec();
+    if (!car) {
+      throw new NotFoundException('Carro não encontrado');
+    }
+    return car;
   }
 
-  update(id: string, updateCarDto: UpdateCarDto) {
-    return this.carModel
+  async update(id: string, updateCarDto: UpdateCarDto) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new NotFoundException('ID inválido');
+    }
+    const result = await this.carModel
       .findByIdAndUpdate(
         {
           _id: id,
@@ -36,13 +50,31 @@ export class CarsService {
         },
       )
       .exec();
+    if (!result) {
+      // Caso o documento não tenha sido encontrado, lança uma NotFoundException
+      throw new NotFoundException('Item não encontrado');
+    }
+    return {
+      message: 'Item alterado com sucesso',
+    };
   }
 
-  remove(id: string) {
-    return this.carModel
+  async remove(id: string) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new NotFoundException('ID inválido');
+    }
+
+    const result = await this.carModel
       .deleteOne({
         _id: id,
       })
       .exec();
+    if (result.deletedCount === 0) {
+      // Caso o documento não tenha sido encontrado, lança uma NotFoundException
+      throw new NotFoundException('Item não encontrado');
+    }
+    return {
+      message: 'Item deletado com sucesso',
+    };
   }
 }
